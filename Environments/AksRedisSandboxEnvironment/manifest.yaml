@@ -1,0 +1,6 @@
+name: aks-with-redis
+version: 1.0.0
+summary: Azure Kubernetes with Redis
+description: Deploys an AKS, Redis, KeyVault, Log Analytics and a virtual network
+runner: ARM
+templatePath: azuredeploy.json
