@@ -2,22 +2,7 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "redis_name" : {
-            "type": "string"
-        },
-        "acr_name" : {
-            "type": "string"
-        },
-        "vnet_name" : {
-            "type": "string"
-        },
-        "aks_name" : {
-            "type": "string"
-        },
-        "keyvault_name" : {
-            "type": "string"
-        },
-        "loganalytics_name" : {
+        "app_name" : {           
             "type": "string"
         },
         "location" : {
@@ -34,15 +19,21 @@
         }
     },
     "variables": {
-        "nsg_name": "[concat(parameters('vnet_name'), '-nsg')]",
-        "cluster_identity": "[concat(parameters('aks_name'), '-cluster-identity')]",
-        "kublet_identity": "[concat(parameters('aks_name'), '-kubelet-identity')]"
+        "redis_name" : "[concat(parameters('app_name'), '-cache')]",
+        "acr_name" :   "[concat(replace(parameters('app_name'),'-',''), 'acr')]",
+        "vnet_name" : "[concat(parameters('app_name'), '-vnet')]",
+        "aks_name" :  "[concat(parameters('app_name'), '-aks')]",
+        "keyvault_name" : "[concat(parameters('app_name'), '-kv')]",
+        "loganalytics_name" : "[concat(parameters('app_name'), '-logs')]",
+        "nsg_name": "[concat(variables('vnet_name'), '-nsg')]",
+        "cluster_identity": "[concat(variables('aks_name'), '-cluster-identity')]",
+        "kublet_identity": "[concat(variables('aks_name'), '-kubelet-identity')]"
     },
     "resources": [
         {
             "type": "Microsoft.Cache/Redis",
             "apiVersion": "2022-05-01",
-            "name": "[parameters('redis_name')]",
+            "name": "[variables('redis_name')]",
             "location":  "[parameters('location')]",
             "properties": {
                 "redisVersion": "6.0",
@@ -65,7 +56,7 @@
         {
             "type": "Microsoft.ContainerRegistry/registries",
             "apiVersion": "2022-02-01-preview",
-            "name": "[parameters('acr_name')]",
+            "name": "[variables('acr_name')]",
             "location":  "[parameters('location')]",
             "sku": {
                 "name": "Premium",
@@ -83,7 +74,7 @@
         {
             "type": "Microsoft.KeyVault/vaults",
             "apiVersion": "2022-07-01",
-            "name": "[parameters('keyvault_name')]",
+            "name": "[variables('keyvault_name')]",
             "location":  "[parameters('location')]",
             "properties": {
                 "sku": {
@@ -106,7 +97,7 @@
                 "enableSoftDelete": true,
                 "softDeleteRetentionInDays": 7,
                 "enableRbacAuthorization": false,
-                "vaultUri": "[concat('https://', parameters('keyvault_name'), '.vault.azure.net/')]",
+                "vaultUri": "[concat('https://', variables('keyvault_name'), '.vault.azure.net/')]",
                 "provisioningState": "Succeeded",
                 "publicNetworkAccess": "Enabled"
             }
@@ -126,7 +117,7 @@
         {
             "type": "Microsoft.OperationalInsights/workspaces",
             "apiVersion": "2021-12-01-preview",
-            "name": "[parameters('loganalytics_name')]",
+            "name": "[variables('loganalytics_name')]",
             "location":  "[parameters('location')]",
             "properties": {
                 "sku": {
@@ -145,7 +136,7 @@
         },
         {
             "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2022-01-01",
+            "apiVersion": "2020-11-01",
             "name": "[variables('nsg_name')]",
             "location":  "[parameters('location')]",
             "properties": {
@@ -174,8 +165,8 @@
         },
         {
             "type": "Microsoft.Network/virtualNetworks",
-            "apiVersion": "2022-01-01",
-            "name": "[parameters('vnet_name')]",
+            "apiVersion": "2020-11-01",
+            "name": "[variables('vnet_name')]",
             "location":  "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg_name'))]"
@@ -226,12 +217,12 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks/', parameters('vnet_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnet_name'))]",
                 "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('cluster_identity'))]"
             ],
             "apiVersion": "2022-04-01",
             "name": "[parameters('networkContributorRoleNameGuid')]",
-            "scope": "[resourceId('Microsoft.Network/virtualNetworks/', parameters('vnet_name'))]",
+            "scope": "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnet_name'))]",
             "properties": {
                 "principalId": "[reference(resourceid('Microsoft.ManagedIdentity/userAssignedIdentities', variables('cluster_identity')),'2018-11-30').principalId]",
                 "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '4d97b98b-1d4f-4787-a291-c67834d212e7')]"
@@ -239,11 +230,11 @@
         },
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2020-07-01",
+            "apiVersion": "2021-04-01",
             "name": "aksManagedCluster",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks/', parameters('vnet_name'))]",
-                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('loganalytics_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnet_name'))]",
+                "[resourceId('Microsoft.OperationalInsights/workspaces', variables('loganalytics_name'))]",
                 "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('cluster_identity'))]"
             ],
             "properties": {
@@ -256,8 +247,8 @@
                     "variables": {},
                     "resources": [{
                         "type": "Microsoft.ContainerService/managedClusters",
-                        "apiVersion": "2022-08-02-preview",
-                        "name": "[parameters('aks_name')]",
+                        "apiVersion": "2022-07-02-preview",
+                        "name": "[variables('aks_name')]",
                         "location":  "[parameters('location')]",
                         "dependsOn": [
                         ],
@@ -273,7 +264,7 @@
                         },
                         "properties": {
                             "kubernetesVersion": "1.24.6",
-                            "dnsPrefix": "[parameters('aks_name')]",
+                            "dnsPrefix": "[variables('aks_name')]",
                             "agentPoolProfiles": [
                                 {
                                     "name": "default",
@@ -282,7 +273,7 @@
                                     "osDiskSizeGB": 30,
                                     "osDiskType": "Managed",
                                     "kubeletDiskType": "OS",
-                                    "vnetSubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet_name'), 'servers')]",
+                                    "vnetSubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet_name'), 'servers')]",
                                     "maxPods": 40,
                                     "type": "VirtualMachineScaleSets",
                                     "maxCount": 3,
@@ -323,14 +314,14 @@
                                 "omsagent": {
                                     "enabled": true,
                                     "config": {
-                                        "logAnalyticsWorkspaceResourceID": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('loganalytics_name'))]"
+                                        "logAnalyticsWorkspaceResourceID": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('loganalytics_name'))]"
                                     }
                                 },
                                 "openServiceMesh": {
                                     "enabled": true
                                 }
                             },
-                            "nodeResourceGroup": "[concat(parameters('aks_name'), '_k8s_nodes_rg')]",
+                            "nodeResourceGroup": "[concat(variables('aks_name'), '_k8s_nodes_rg')]",
                             "enableRBAC": true,
                             "networkProfile": {
                                 "networkPlugin": "azure",
@@ -391,7 +382,7 @@
                             "disableLocalAccounts": true,
                             "securityProfile": {
                                 "defender": {
-                                    "logAnalyticsWorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('loganalytics_name'))]",
+                                    "logAnalyticsWorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('loganalytics_name'))]",
                                     "securityMonitoring": {
                                         "enabled": true
                                     }
