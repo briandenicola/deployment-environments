@@ -27,7 +27,8 @@
         "loganalytics_name" : "[concat(parameters('app_name'), '-logs')]",
         "nsg_name": "[concat(variables('vnet_name'), '-nsg')]",
         "cluster_identity": "[concat(variables('aks_name'), '-cluster-identity')]",
-        "kublet_identity": "[concat(variables('aks_name'), '-kubelet-identity')]"
+        "kublet_identity": "[concat(variables('aks_name'), '-kubelet-identity')]",
+        "aks_version": "1.26.3"
     },
     "resources": [
         {
@@ -209,125 +210,127 @@
             }
         },
         {
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2021-04-01",
-            "name": "aksManagedCluster",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnet_name'))]",
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('cluster_identity'))]"
-            ],
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "apiVersion": "2021-12-01-preview",
+            "name": "[variables('loganalytics_name')]",
+            "location":  "[parameters('location')]",
             "properties": {
-                "mode": "Incremental",
-                "parameters": {},
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {},
-                    "variables": {},
-                    "resources": [{
-                        "type": "Microsoft.ContainerService/managedClusters",
-                        "apiVersion": "2023-05-02-preview",
-                        "name": "[variables('aks_name')]",
-                        "location":  "[parameters('location')]",
-                        "dependsOn": [
-                        ],
-                        "sku": {
-                            "tier": "Free"
-                        },
-                        "identity": {
-                            "type": "UserAssigned",
-                            "userAssignedIdentities": {
-                                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('cluster_identity'))]": {}
-                            }
-                        },
-                        "properties": {
-                            "kubernetesVersion": "1.26.3",
-                            "dnsPrefix": "[variables('aks_name')]",
-                            "agentPoolProfiles": [
-                                {
-                                    "name": "default",
-                                    "count": 1,
-                                    "vmSize": "Standard_DS4_v2",
-                                    "osDiskSizeGB": 30,
-                                    "osDiskType": "Managed",
-                                    "kubeletDiskType": "OS",
-                                    "vnetSubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet_name'), 'servers')]",
-                                    "maxPods": 40,
-                                    "type": "VirtualMachineScaleSets",
-                                    "maxCount": 3,
-                                    "minCount": 1,
-                                    "enableAutoScaling": true,
-                                    "orchestratorVersion": "1.26.3",
-                                    "mode": "System",
-                                    "osType": "Linux",
-                                    "osSKU": "Mariner",
-                                    "upgradeSettings": {
-                                        "maxSurge": "25%"
-                                    },
-                                }
-                            ],
-                            "addonProfiles": {
-                                "azureKeyvaultSecretsProvider": {
-                                    "enabled": true,
-                                    "config": {
-                                        "enableSecretRotation": "true",
-                                        "rotationPollInterval": "5m"
-                                    }
-                                },
-                                "azurepolicy": {
-                                    "enabled": true
-                                },
-                                "omsagent": {
-                                    "enabled": true
-                                }
-                            },
-                            "nodeResourceGroup": "[concat(variables('aks_name'), '_k8s_nodes_rg')]",
-                            "enableRBAC": true,
-                            "networkProfile": {
-                                "networkPlugin": "azure",
-                                "loadBalancerSku": "Standard",
-                                "serviceCidr": "100.97.0.0/16",
-                                "dnsServiceIP": "100.97.0.10",
-                                "dockerBridgeCidr": "172.17.0.1/16",
-                                "serviceCidrs": [
-                                    "100.97.0.0/16"
-                                ],
-                                "ipFamilies": [
-                                    "IPv4"
-                                ]
-                            },
-                            "aadProfile": {
-                                "managed": true,
-                                "adminGroupObjectIDs": [
-                                ],
-                                "enableAzureRBAC": true,
-                                "tenantID": "[subscription().tenantID]"
-                            },
-                            "identityProfile": {
-                                "kubeletidentity": {
-                                    "resourceId": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('kublet_identity'))]"
-                                }
-                            },
-                            "autoUpgradeProfile": {
-                                "upgradeChannel": "patch"
-                            },
-                            "disableLocalAccounts": true,
-                            "securityProfile": {
-                                "defender": {
-                                    "securityMonitoring": {
-                                        "enabled": true
-                                    }
-                                },
-                                "workloadIdentity": {
-                                    "enabled": true
-                                }
-                            },
-                            "publicNetworkAccess": "Enabled",
-                            "oidcIssuerProfile": {
-                                "enabled": true
-                            }
+                "sku": {
+                    "name": "PerGB2018"
+                },
+                "retentionInDays": 30,
+                "features": {
+                    "enableLogAccessUsingOnlyResourcePermissions": true
+                },
+                "workspaceCapping": {
+                    "dailyQuotaGb": -1
+                },
+                "publicNetworkAccessForIngestion": "Enabled",
+                "publicNetworkAccessForQuery": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.ContainerService/managedClusters",
+            "apiVersion": "2023-05-02-preview",
+            "name": "[variables('aks_name')]",
+            "location":  "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', variables('loganalytics_name'))]",
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('cluster_identity'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnet_name'))]",
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('kublet_identity'))]"
+            ],
+            "sku": {
+                "name": "Base",
+                "tier": "Standard"
+            },
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('cluster_identity'))]": {}
+                }
+            },
+            "properties": {
+                "kubernetesVersion": "[variables('aks_version')]",
+                "dnsPrefix": "[variables('aks_name')]",
+                "agentPoolProfiles": [
+                    {
+                        "name": "default",
+                        "count": 1,
+                        "vmSize": "Standard_DS4_v2",
+                        "osDiskSizeGB": 90,
+                        "vnetSubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet_name'), 'servers')]",
+                        "maxPods": 40,
+                        "type": "VirtualMachineScaleSets",
+                        "maxCount": 3,
+                        "minCount": 1,
+                        "enableAutoScaling": true,
+                        "orchestratorVersion": "[variables('aks_version')]",
+                        "mode": "System",
+                        "osType": "Linux",
+                        "osSKU": "Mariner",
+                        "upgradeSettings": {
+                            "maxSurge": "33%"
                         }
-                    }]
+                    }
+                ],
+                "addonProfiles": {
+                    "azureKeyvaultSecretsProvider": {
+                        "enabled": true,
+                        "config": {
+                            "enableSecretRotation": "true",
+                            "rotationPollInterval": "5m"
+                        }
+                    },
+                    "azurepolicy": {
+                        "enabled": true
+                    },
+                    "omsagent": {
+                        "enabled": true,
+                        "config": {
+                            "logAnalyticsWorkspaceResourceID": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('loganalytics_name'))]"
+                        }
+                    }
+                },
+                "nodeResourceGroup": "[concat(variables('aks_name'), '_k8s_nodes_rg')]",
+                "enableRBAC": true,
+                "networkProfile": {
+                    "networkPlugin": "azure",
+                    "loadBalancerSku": "Standard",
+                    "serviceCidr": "100.97.0.0/16",
+                    "dnsServiceIP": "100.97.0.10",
+                    "dockerBridgeCidr": "172.17.0.1/16"
+                },
+                "aadProfile": {
+                    "managed": true,
+                    "adminGroupObjectIDs": [
+                    ],
+                    "enableAzureRBAC": true,
+                    "tenantID": "[subscription().tenantID]"
+                },
+                "identityProfile": {
+                    "kubeletidentity": {
+                        "resourceId": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('kublet_identity'))]"
+                    }
+                },
+                "autoUpgradeProfile": {
+                    "upgradeChannel": "patch",
+                    "nodeOSUpgradeChannel": "NodeImage"
+                },
+                "disableLocalAccounts": true,
+                "securityProfile": {
+                    "workloadIdentity": {
+                        "enabled": true
+                    }
+                },
+                "publicNetworkAccess": "Enabled",
+                "oidcIssuerProfile": {
+                    "enabled": true
+                },
+                "workloadAutoScalerProfile": {
+                    "keda": {
+                        "enabled": true
+                    }
                 }
             }
         }
