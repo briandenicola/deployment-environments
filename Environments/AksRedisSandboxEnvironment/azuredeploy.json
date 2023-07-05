@@ -3,7 +3,6 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "app_name" : {        
-            "defaultValue": "kitten-13426",
             "type": "string"
         },
         "location" : {
@@ -116,26 +115,6 @@
             "location":  "[parameters('location')]"
         },
         {
-            "type": "Microsoft.OperationalInsights/workspaces",
-            "apiVersion": "2021-12-01-preview",
-            "name": "[variables('loganalytics_name')]",
-            "location":  "[parameters('location')]",
-            "properties": {
-                "sku": {
-                    "name": "PerGB2018"
-                },
-                "retentionInDays": 30,
-                "features": {
-                    "enableLogAccessUsingOnlyResourcePermissions": true
-                },
-                "workspaceCapping": {
-                    "dailyQuotaGb": -1
-                },
-                "publicNetworkAccessForIngestion": "Enabled",
-                "publicNetworkAccessForQuery": "Enabled"
-            }
-        },
-        {
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2020-11-01",
             "name": "[variables('nsg_name')]",
@@ -235,7 +214,6 @@
             "name": "aksManagedCluster",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnet_name'))]",
-                "[resourceId('Microsoft.OperationalInsights/workspaces', variables('loganalytics_name'))]",
                 "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('cluster_identity'))]"
             ],
             "properties": {
@@ -248,7 +226,7 @@
                     "variables": {},
                     "resources": [{
                         "type": "Microsoft.ContainerService/managedClusters",
-                        "apiVersion": "2022-07-02-preview",
+                        "apiVersion": "2022-04-02-preview",
                         "name": "[variables('aks_name')]",
                         "location":  "[parameters('location')]",
                         "dependsOn": [
@@ -281,9 +259,6 @@
                                     "minCount": 1,
                                     "enableAutoScaling": true,
                                     "scaleDownMode": "Delete",
-                                    "powerState": {
-                                        "code": "Running"
-                                    },
                                     "orchestratorVersion": "1.24.6",
                                     "enableNodePublicIP": false,
                                     "enableCustomCATrust": false,
@@ -313,10 +288,7 @@
                                     "enabled": true
                                 },
                                 "omsagent": {
-                                    "enabled": true,
-                                    "config": {
-                                        "logAnalyticsWorkspaceResourceID": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('loganalytics_name'))]"
-                                    }
+                                    "enabled": true
                                 },
                                 "openServiceMesh": {
                                     "enabled": true
@@ -383,7 +355,6 @@
                             "disableLocalAccounts": true,
                             "securityProfile": {
                                 "defender": {
-                                    "logAnalyticsWorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('loganalytics_name'))]",
                                     "securityMonitoring": {
                                         "enabled": true
                                     }
