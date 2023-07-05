@@ -25,7 +25,7 @@
         "aks_name" :  "[concat(parameters('app_name'), '-aks')]",
         "keyvault_name" : "[concat(parameters('app_name'), '-kv')]",
         "loganalytics_name" : "[concat(parameters('app_name'), '-logs')]",
-        "nsg_name": "[concat(variables('vnet_name'), '-nsg')]",
+        "nsg_name": "[concat(parameters('app_name'), '-nsg')]",
         "cluster_identity": "[concat(variables('aks_name'), '-cluster-identity')]",
         "kublet_identity": "[concat(variables('aks_name'), '-kubelet-identity')]",
         "aks_version": "1.26.3"
