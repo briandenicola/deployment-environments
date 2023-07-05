@@ -242,7 +242,7 @@
                             }
                         },
                         "properties": {
-                            "kubernetesVersion": "1.24.6",
+                            "kubernetesVersion": "1.26.3",
                             "dnsPrefix": "[variables('aks_name')]",
                             "agentPoolProfiles": [
                                 {
@@ -259,7 +259,7 @@
                                     "minCount": 1,
                                     "enableAutoScaling": true,
                                     "scaleDownMode": "Delete",
-                                    "orchestratorVersion": "1.24.6",
+                                    "orchestratorVersion": "1.26.3",
                                     "enableNodePublicIP": false,
                                     "enableCustomCATrust": false,
                                     "mode": "System",
