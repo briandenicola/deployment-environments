@@ -4,3 +4,10 @@ summary: Azure Kubernetes with Redis
 description: Deploys an AKS, Redis, KeyVault, Log Analytics and a virtual network
 runner: ARM
 templatePath: azuredeploy.json
+
+parameters:
+  - id: app_name
+    name: app_name
+    description: 'Name of the Application.'
+    type: string
+    required: true
