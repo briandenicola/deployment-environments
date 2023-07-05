@@ -189,10 +189,10 @@
             ],
             "apiVersion": "2022-04-01",
             "name": "[parameters('msiOperatorRoleNameGuid')]",
-            "scope": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('kublet_identity'))]",
             "properties": {
                 "principalId": "[reference(resourceid('Microsoft.ManagedIdentity/userAssignedIdentities', variables('cluster_identity')),'2018-11-30').principalId]",
-                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'f1a07417-d97a-45cb-824c-7a7467783830')]"
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'f1a07417-d97a-45cb-824c-7a7467783830')]",
+                "principalType": "ServicePrincipal"
             }
         },
         {
@@ -203,10 +203,10 @@
             ],
             "apiVersion": "2022-04-01",
             "name": "[parameters('networkContributorRoleNameGuid')]",
-            "scope": "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnet_name'))]",
             "properties": {
                 "principalId": "[reference(resourceid('Microsoft.ManagedIdentity/userAssignedIdentities', variables('cluster_identity')),'2018-11-30').principalId]",
-                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '4d97b98b-1d4f-4787-a291-c67834d212e7')]"
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '4d97b98b-1d4f-4787-a291-c67834d212e7')]",
+                "principalType": "ServicePrincipal"
             }
         },
         {
@@ -238,7 +238,9 @@
                 "[resourceId('Microsoft.OperationalInsights/workspaces', variables('loganalytics_name'))]",
                 "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('cluster_identity'))]",
                 "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnet_name'))]",
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('kublet_identity'))]"
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('kublet_identity'))]",
+                "[resourceId('Microsoft.Authorization/roleAssignments', parameters('networkContributorRoleNameGuid'))]",
+                "[resourceId('Microsoft.Authorization/roleAssignments', parameters('msiOperatorRoleNameGuid'))]"
             ],
             "sku": {
                 "name": "Base",
