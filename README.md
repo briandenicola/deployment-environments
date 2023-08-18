@@ -1,6 +1,6 @@
 # Azure Deployment Environments Community
 
-The goal of this repository is to provide sample infrastructure-as-code(IaC) templates that could be used to get started with the [Azure Deployment Environments](https://aka.ms/deploymentenvironments) service.
+The goal of this repository is to provide sample infrastructure-as-code(IaC) templates that could be used to get started with the [Azure Deployment Environments](https://aka.ms/deploymentenvironments) service. This repository will also be used to provide documentation on capabilities that are in private preview(gated) and engage with customers who are experimenting with the capabilities in private preview.
 
 Azure Deployment Environments(ADE) empowers development teams to quickly and easily spin-up app infrastructure with project-based templates that establish consistency and best practices while maximizing security, compliance, and cost efficiency. This on-demand access to secure environments accelerates the different stages of the software development lifecycle in a compliant and cost-efficient manner.
 
@@ -8,7 +8,9 @@ An Environment is a collection of Azure resources on which your application is d
 
 [Environments](https://github.com/Azure/deployment-environments/tree/main/Environments) folder consists of sample templates that you can use to quickly get started with the service.
 
-> Note - ADE currently supports [ARM templates](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/overview) and in the near future, will support other IaC tools such as Terraform, Bicep, Pulumi, etc.
+[Documentation](https://github.com/Azure/deployment-environments/tree/main/documentation) folder details out capabilities that are currently in private preview and instructions on how to try them out.
+
+> Note - ADE currently supports [ARM templates](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/overview) publicly and Terraform support is in private preview. In the near future, will support other IaC tools such as Bicep, Pulumi, etc.
 
 ## Contributing
 
