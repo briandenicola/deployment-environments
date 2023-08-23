@@ -1,0 +1,34 @@
+name: IsolatedAKSDeveloperEnvironment
+summary: Terraform example for a Developer Sandbox Environment
+description: Deploys an environment using Terraform containing AKS, CosmosDB and Event Hub resources.
+runner: Terraform
+templatePath: main.tf
+parameters: 
+- id: "region"
+  name: "region"
+  type: "string"
+  default: "southcentralus"
+- id: "vm_sku"
+  name: "vm_sku"
+  type: "string"
+  default: "Standard_D4ads_v5"
+- id: "ingress_namespace"
+  name: "ingress_namespace"
+  default: "aks-istio-ingress"
+  type: "string"
+- id: "github_repository"
+  name: "github_repository"
+  default: "https://github.com/azure-samples/privatelink-sandbox-demo"
+  type: "string"
+- id: "branch_name"
+  name: "branch_name"
+  default: "main"
+  type: "string"
+- id: "deploy_cosmosdb"
+  name: "deploy_cosmosdb"
+  default: "false"
+  type: "string"
+- id: "deploy_eventhub"
+  name: "deploy_eventhub"
+  default: "false"
+  type: "string"

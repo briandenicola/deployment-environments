@@ -1,0 +1,4 @@
+#deploy_cosmosdb                              = true
+#deploy_eventhub                              = true
+#vm_sku                                       = "Standard_B4ms
+#github_repository                            = "https://github.com/azure-samples/privatelink-sandbox-demo"
