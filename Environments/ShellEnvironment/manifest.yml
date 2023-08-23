@@ -1,0 +1,9 @@
+name: ShellEnvrionment
+summary: Terraform example for a Shell Resource Group with a VNet, KeyVault and Logging
+runner: Terraform
+templatePath: main.tf
+parameters: 
+- id: "region"
+  name: "Region"
+  default: "southcentralus"
+  type: "string"
