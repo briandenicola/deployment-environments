@@ -3,32 +3,42 @@ variable "region" {
   default     = "southcentralus"
 }
 
-variable "vm_sku" {
-  description = "The SKU for the default node pool"
-  default     = "Standard_D4ads_v5" 
+variable "tags" {
+  description = "Tags to apply to all resources"
+  default     = "Deployment Environment Demo"
 }
 
-variable "ingress_namespace" {
-  description = "The namespace where the Istio ingress will be deployed to"
-  default     = "aks-istio-ingress"   
+variable "node_sku" {
+  description = "The value for the VM SKU"
+  default     = "Standard_D4ads_v5"
 }
 
-variable "github_repository" {
-  description = "Git Repository used by flux"
-  default = "https://github.com/briandenicola/deployment-environments"
+variable "node_count" {
+  description = "The value for the VM SKU"
+  default     = 1
 }
 
-variable "branch_name" {
-  description = "Git branched used by flux"
-  default     = "main"
-} 
-
-variable "deploy_cosmosdb" {
-  description = "Deploy Azure Cosmos DB as part of this Sandbox"
-  default     = false 
+variable "deploy_bastion" {
+  description = "Deploy a bastion host"
+  default     = true
 }
 
-variable "deploy_eventhub" {
-  description = "Deploy Azure Event Hub as part of this Sandbox"
-  default     = false 
+variable "deploy_event_hub" {
+  description = "Deploy an Event Hub namespace"
+  default     = false
+}
+
+variable "deploy_cosmos_db" {
+  description = "Deploy a Cosmos DB instance"
+  default     = false
+}
+
+variable "deploy_flux" {
+  description = "Deploy Flux Extension"
+  default     = true
+}
+
+variable "flux_repository" {
+  description = "The repository for the Flux extension GitOps configuration"
+  default     = "https://github.com/samples/flux-get-started"
 }

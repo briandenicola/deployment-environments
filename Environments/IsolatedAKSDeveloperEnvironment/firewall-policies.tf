@@ -1,6 +1,6 @@
 
 resource "azurerm_firewall_policy" "this" {
-  name                = "${local.fw_name}-policies"
+  name                = "${local.firewall_name}-policies"
   resource_group_name = azurerm_resource_group.this.name
   location            = azurerm_resource_group.this.location
   sku                 = "Standard"
@@ -11,7 +11,7 @@ resource "azurerm_firewall_policy" "this" {
 }
 
 resource "azurerm_firewall_policy_rule_collection_group" "this" {
-  name               = "${local.fw_name}_rules_collection"
+  name               = "${local.firewall_name}_rules_collection"
   firewall_policy_id = azurerm_firewall_policy.this.id
 
   priority = 200

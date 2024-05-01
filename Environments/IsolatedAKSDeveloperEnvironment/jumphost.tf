@@ -1,5 +1,11 @@
+locals {
+  vm_name  = "${local.resource_name}-vm"
+  username = "manager"
+  vm_size  = "Standard_B1s"
+}
+
 resource "azurerm_network_interface" "this" {
-  name                = "${local.resource_name}-vm-nic"
+  name                = "${local.vm_name}-nic"
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
 
@@ -11,30 +17,30 @@ resource "azurerm_network_interface" "this" {
 }
 
 resource "azurerm_linux_virtual_machine" "this" {
-  name                = "${local.resource_name}-vm"
+  name                = local.vm_name
   resource_group_name = azurerm_resource_group.this.name
   location            = azurerm_resource_group.this.location
-  size                = "Standard_B1ms"
-  admin_username      = "manager"
+  size                = local.vm_size
+  admin_username      = local.username
   network_interface_ids = [
     azurerm_network_interface.this.id,
   ]
 
   admin_ssh_key {
-    username   = "manager"
+    username   = local.username
     public_key = tls_private_key.rsa.public_key_openssh
   }
 
   os_disk {
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
-    name                 = "${local.resource_name}-vm-osdisk" 
+    name                 = "${local.vm_name}-osdisk"
   }
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "20.04-LTS"
+    offer     = "0001-com-ubuntu-server-focal"
+    sku       = "20_04-lts"
     version   = "latest"
   }
 }

@@ -1,12 +1,8 @@
-data "azurerm_kubernetes_service_versions" "current" {
-  location = azurerm_resource_group.this.location
+locals {
+  kubernetes_version = data.azurerm_kubernetes_service_versions.current.versions[length(data.azurerm_kubernetes_service_versions.current.versions) - 1]
 }
 
-resource "azurerm_kubernetes_cluster" "aks" {
-  depends_on = [ 
-    azurerm_subnet_route_table_association.api,
-    azurerm_subnet_route_table_association.nodes,
-  ]
+resource "azurerm_kubernetes_cluster" "this" {
   lifecycle {
     ignore_changes = [
       default_node_pool.0.node_count,
@@ -14,14 +10,14 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 
   name                                = local.aks_name
-  resource_group_name                 = azurerm_resource_group.this.name
-  location                            = azurerm_resource_group.this.location
-  node_resource_group                 = "${local.resource_name}_k8s_nodes_rg"
+  resource_group_name                 = data.azurerm_resource_group.this.name
+  location                            = data.azurerm_resource_group.this.location
+  node_resource_group                 = local.aks_node_rg_name
   private_cluster_enabled             = true
   dns_prefix_private_cluster          = local.aks_name
   private_dns_zone_id                 = azurerm_private_dns_zone.aks_private_zone.id
   private_cluster_public_fqdn_enabled = false
-  kubernetes_version                  = data.azurerm_kubernetes_service_versions.current.latest_version
+  kubernetes_version                  = local.kubernetes_version
   sku_tier                            = "Free"
   oidc_issuer_enabled                 = true
   workload_identity_enabled           = true
@@ -36,20 +32,13 @@ resource "azurerm_kubernetes_cluster" "aks" {
 
   api_server_access_profile {
     vnet_integration_enabled = true
-    subnet_id                = azurerm_subnet.api.id
+    subnet_id                = var.aks_mgmt_subnet_id
   }
 
   azure_active_directory_role_based_access_control {
     managed                = true
     azure_rbac_enabled     = true
     tenant_id              = data.azurerm_client_config.current.tenant_id
-  }
-
-  linux_profile {
-    admin_username = "manager"
-    ssh_key {
-      key_data = tls_private_key.rsa.public_key_openssh
-    }
   }
 
   identity {
@@ -70,17 +59,14 @@ resource "azurerm_kubernetes_cluster" "aks" {
 
   default_node_pool {
     name                = "default"
-    node_count          = 3
-    vm_size             = var.vm_sku
-    os_disk_size_gb     = 90
-    vnet_subnet_id      = azurerm_subnet.nodes.id
+    node_count          = var.node_count
+    vm_size             = var.node_sku
+    os_disk_size_gb     = 127
+    vnet_subnet_id      = var.aks_subnet_id
     os_sku              = "Mariner"
-    os_disk_type        = "Ephemeral"
     type                = "VirtualMachineScaleSets"
-    enable_auto_scaling = true
-    min_count           = 3
-    max_count           = 9
-    max_pods            = 40
+    enable_auto_scaling = false
+    max_pods            = 250
 
     upgrade_settings {
       max_surge = "33%"
@@ -116,11 +102,11 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 
   oms_agent {
-    log_analytics_workspace_id = azurerm_log_analytics_workspace.this.id
+    log_analytics_workspace_id = var.log_analytics_workspace_id
   }
 
   microsoft_defender {
-    log_analytics_workspace_id = azurerm_log_analytics_workspace.this.id
+    log_analytics_workspace_id = var.log_analytics_workspace_id
   }
 
   key_vault_secrets_provider {
@@ -132,10 +118,42 @@ resource "azurerm_kubernetes_cluster" "aks" {
     keda_enabled = true
   }
 
-  storage_profile {
-    blob_driver_enabled = true
-    disk_driver_enabled = true
-    file_driver_enabled = true
+}
+
+resource "azurerm_monitor_diagnostic_setting" "aks" {
+  name                       = "diag"
+  target_resource_id         = azurerm_kubernetes_cluster.this.id
+  log_analytics_workspace_id = var.log_analytics_workspace_id
+
+  enabled_log  {
+    category = "kube-apiserver"
   }
 
+  enabled_log  {
+    category = "kube-audit"
+  }
+
+  enabled_log  {
+    category = "kube-audit-admin"
+  }
+
+  enabled_log  {
+    category = "kube-controller-manager"
+  }
+
+  enabled_log  {
+    category = "kube-scheduler"
+  }
+
+  enabled_log  {
+    category = "cluster-autoscaler"
+  }
+
+  enabled_log  {
+    category = "guard"
+  }
+
+  metric {
+    category = "AllMetrics"
+  }
 }

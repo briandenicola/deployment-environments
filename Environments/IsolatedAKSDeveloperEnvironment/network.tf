@@ -1,5 +1,5 @@
 resource "azurerm_virtual_network" "this" {
-  name                = "${local.resource_name}-network"
+  name                = local.vnet_name
   address_space       = [ local.vnet_cidr ]
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
